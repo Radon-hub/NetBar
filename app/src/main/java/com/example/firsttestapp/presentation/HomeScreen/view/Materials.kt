@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -158,6 +159,7 @@ object Materials {
 
                 Box(
                     modifier = modifier
+                        .testTag("acceptButton")
                         .padding(PaddingValues(18.dp, 13.dp))
                         .clip(RoundedCornerShape(6.dp))
                         .background(
@@ -213,7 +215,7 @@ object Materials {
                     model.isSelected?.let{ status ->
 
                         if(status){
-                            SelectedCargoBox{
+                            SelectedCargoBox(origin = model.city?.origin  ?: "", destination = model.city?.destination ?: ""){
                                 onUnSelectItemClick()
                             }
                             Spacer(Modifier.height(15.dp))
@@ -227,7 +229,7 @@ object Materials {
                         Column(Modifier
                             .fillMaxWidth()
                             .weight(1f)) {
-                            City(isDestination = false, title = model.city?.origin ?: "", subtitle = model.city?.originState ?: "")
+                            City(modifier = Modifier,isDestination = false, title = model.city?.origin ?: "", subtitle = model.city?.originState ?: "")
                             VerticalLine()
                             City(isDestination = true, title = model.city?.destination ?: "", subtitle = model.city?.destinationState ?: "")
                         }
@@ -280,7 +282,7 @@ object Materials {
                 }
 
                 Text(
-                    modifier = Modifier.padding(end = 5.dp),
+                    modifier = Modifier.testTag("originTag").padding(end = 5.dp),
                     text = title,
                     color = Theme.colors.textPrimary,
                     style = Theme.typography.h2
@@ -337,7 +339,7 @@ object Materials {
         }
 
         @Composable
-        fun SelectedCargoBox(modifier: Modifier = Modifier,onRemoveClicked:()->Unit) {
+        fun SelectedCargoBox(modifier: Modifier = Modifier,origin:String,destination:String,onRemoveClicked:()->Unit) {
 
             Row(modifier = Modifier
                 .fillMaxWidth()
@@ -352,7 +354,7 @@ object Materials {
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    text = "بار تهران به کرمان انتخاب شده",
+                    text = " بار $origin به $destination انتخاب شده ",
                     color = Theme.colors.textPrimary,
                     style = Theme.typography.h3
                 )

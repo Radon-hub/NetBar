@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel: ViewModel() {
 
-    val listOfCargos = listOf<CargoEntity>(
+    private val listOfCargos = listOf<CargoEntity>(
         CargoEntity(
             id = 1,
             city = CityEntity(
@@ -96,11 +96,11 @@ class HomeViewModel: ViewModel() {
                     }
                 }
             }
-            is HomeEvents.OnDismiss -> {
-                onDismiss()
-            }
             is HomeEvents.OnRemoveItemClick -> {
                 changeItemToUnSelected()
+            }
+            is HomeEvents.OnDismiss -> {
+                onDismiss()
             }
             is HomeEvents.OnShowSheet -> {
                 onShow()
@@ -116,7 +116,7 @@ class HomeViewModel: ViewModel() {
         )
     }
 
-    fun onShow(){
+    private fun onShow(){
         viewModelScope.launch {
             state.value = state.value.copy(
                 showSheet = true,
@@ -126,7 +126,7 @@ class HomeViewModel: ViewModel() {
         }
     }
 
-    fun onDismiss(){
+    private fun onDismiss(){
         viewModelScope.launch {
             state.value = state.value.copy(
                 showSheet = false,
@@ -136,7 +136,7 @@ class HomeViewModel: ViewModel() {
         }
     }
 
-    fun setSelectedCargo(cargo: CargoEntity){
+    private fun setSelectedCargo(cargo: CargoEntity){
         viewModelScope.launch {
             state.value = state.value.copy(
                 showSheet = state.value.showSheet,
@@ -146,14 +146,23 @@ class HomeViewModel: ViewModel() {
         }
     }
 
-    fun changeItemToSelected(id: Int) {
+    private fun changeItemToSelected(id: Int) {
         viewModelScope.launch {
 
             state.value = state.value.copy(
                 showSheet = state.value.showSheet,
                 cargoList = state.value.cargoList.map {
                     if (it.id == id) {
-                        it.copy(isSelected = true)
+                        val changeditem = it.copy(isSelected = true)
+                        setSelectedCargo(changeditem)
+                        it.copy(
+                            changeditem.id,
+                            changeditem.city,
+                            changeditem.weight,
+                            changeditem.price,
+                            changeditem.isSelected
+                        )
+
                     } else {
                         it.copy(isSelected = false)
                     }
@@ -164,7 +173,7 @@ class HomeViewModel: ViewModel() {
         }
     }
 
-    fun changeItemToUnSelected() {
+    private fun changeItemToUnSelected() {
         viewModelScope.launch {
             state.value = state.value.copy(
                 showSheet = false,

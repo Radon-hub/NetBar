@@ -33,7 +33,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -84,6 +88,7 @@ class HomeScreen {
 
         if (homeScreenState.showSheet) {
             ModalBottomSheet(
+                modifier = Modifier.testTag("bottomSheet"),
                 containerColor = Color.White,
                 dragHandle = null,
                 onDismissRequest = { viewModel.onEvent(HomeEvents.OnDismiss) },
@@ -95,9 +100,10 @@ class HomeScreen {
                         homeScreenState.selectedCargo.let {
 
                             if(it?.isSelected == null){
-                                it?.id?.let{
-                                    viewModel.changeItemToSelected(id = it)
+                                it?.let{
+                                    viewModel.onEvent(HomeEvents.OnAddItemClick(it))
                                     Toast.makeText(context,"بار انتخاب شد ...", Toast.LENGTH_SHORT).show()
+                                    viewModel.onEvent(HomeEvents.OnDismiss)
                                 }
                             }else{
                                     Toast.makeText(context,"بار دیگری نمیتونی انتخاب کنی !", Toast.LENGTH_SHORT).show()
@@ -120,6 +126,7 @@ class HomeScreen {
                         Icon(
                             modifier = Modifier
                                 .size(24.dp)
+                                .testTag("closeIcon")
                                 .clickable {  },
                             painter = painterResource(R.drawable.arrow_back),
                             contentDescription = "Back",
@@ -163,24 +170,25 @@ class HomeScreen {
                     state = listState,
                     modifier = Modifier
                         .fillMaxSize()
+                        .testTag("lazyList")
                 ) {
 
                     items(totalItems) { index ->
                         val item = homeScreenState.cargoList[index % homeScreenState.cargoList.size]
                         Materials.Cargo.Item(
+                            modifier = Modifier.testTag("originTagIndex$index"),
                             model = item,
                             onItemClick = {
 
-                                viewModel.setSelectedCargo(item)
+                                viewModel.onEvent(HomeEvents.OnItemClick(item))
 
                                 scope.launch {
                                     viewModel.onEvent(HomeEvents.OnShowSheet)
-//                                    showSheet = true
                                 }
 
                             },
                             onUnSelectItemClick = {
-                                viewModel.changeItemToUnSelected()
+                                viewModel.onEvent(HomeEvents.OnRemoveItemClick)
                             }
                         )
                     }
