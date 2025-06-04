@@ -42,6 +42,7 @@ import com.example.firsttestapp.presentation.ui.share.TopBar
 import com.example.firsttestapp.R
 import com.example.firsttestapp.domain.model.CargoEntity
 import com.example.firsttestapp.domain.model.CityEntity
+import com.example.firsttestapp.presentation.HomeScreen.intent.HomeEvents
 import com.example.firsttestapp.presentation.HomeScreen.view.Materials.Cargo.DetailsBottomSheet
 import com.example.firsttestapp.presentation.HomeScreen.viewmodel.HomeViewModel
 import com.example.firsttestapp.presentation.ui.share.Theme
@@ -58,11 +59,10 @@ class HomeScreen {
         val context = LocalContext.current
         val viewModel = koinViewModel<HomeViewModel>()
 
-        val baseItems by viewModel.cargoFlow.collectAsStateWithLifecycle()
-        val selectedItem by viewModel.selectedCargo.collectAsStateWithLifecycle()
+        val homeScreenState by viewModel.homeState.collectAsStateWithLifecycle()
 
         val repeatCount = 1000 // Repeat base list many times
-        val totalItems = baseItems.size * repeatCount
+        val totalItems = homeScreenState.cargoList.size * repeatCount
         val centerIndex = totalItems / 2
 
 
@@ -70,8 +70,8 @@ class HomeScreen {
         val scope = rememberCoroutineScope()
         // Auto-reset scroll to center when near edges
         LaunchedEffect(listState.firstVisibleItemIndex) {
-            if (listState.firstVisibleItemIndex < baseItems.size ||
-                listState.firstVisibleItemIndex > totalItems - baseItems.size
+            if (listState.firstVisibleItemIndex < homeScreenState.cargoList.size ||
+                listState.firstVisibleItemIndex > totalItems - homeScreenState.cargoList.size
             ) {
                 scope.launch {
                     listState.scrollToItem(centerIndex)
@@ -81,22 +81,21 @@ class HomeScreen {
         val color = Theme.colors
 
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        var showSheet by remember { mutableStateOf(false) }
 
-        if (showSheet) {
+        if (homeScreenState.showSheet) {
             ModalBottomSheet(
                 containerColor = Color.White,
                 dragHandle = null,
-                onDismissRequest = { showSheet = false },
+                onDismissRequest = { viewModel.onEvent(HomeEvents.OnDismiss) },
                 sheetState = sheetState
             ) {
                 DetailsBottomSheet(
-                    cargoEntity = selectedItem,
+                    cargoEntity = homeScreenState.selectedCargo ?: CargoEntity(),
                     onConfirm = {
-                        selectedItem.let {
+                        homeScreenState.selectedCargo.let {
 
-                            if(it.isSelected == null){
-                                it.id?.let{
+                            if(it?.isSelected == null){
+                                it?.id?.let{
                                     viewModel.changeItemToSelected(id = it)
                                     Toast.makeText(context,"بار انتخاب شد ...", Toast.LENGTH_SHORT).show()
                                 }
@@ -107,7 +106,7 @@ class HomeScreen {
                         }
                     },
                     onDismiss = {
-                        showSheet = false
+                        viewModel.onEvent(HomeEvents.OnDismiss)
                     }
                 )
             }
@@ -167,7 +166,7 @@ class HomeScreen {
                 ) {
 
                     items(totalItems) { index ->
-                        val item = baseItems[index % baseItems.size]
+                        val item = homeScreenState.cargoList[index % homeScreenState.cargoList.size]
                         Materials.Cargo.Item(
                             model = item,
                             onItemClick = {
@@ -175,7 +174,8 @@ class HomeScreen {
                                 viewModel.setSelectedCargo(item)
 
                                 scope.launch {
-                                    showSheet = true
+                                    viewModel.onEvent(HomeEvents.OnShowSheet)
+//                                    showSheet = true
                                 }
 
                             },

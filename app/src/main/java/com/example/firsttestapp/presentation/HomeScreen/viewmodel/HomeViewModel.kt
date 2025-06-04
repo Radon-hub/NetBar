@@ -1,9 +1,14 @@
 package com.example.firsttestapp.presentation.HomeScreen.viewmodel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.firsttestapp.domain.model.CargoEntity
 import com.example.firsttestapp.domain.model.CityEntity
+import com.example.firsttestapp.presentation.HomeScreen.intent.HomeEvents
+import com.example.firsttestapp.presentation.HomeScreen.intent.HomeScreenState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -75,40 +80,97 @@ class HomeViewModel: ViewModel() {
     )
 
 
-    private val _cargoFlow = MutableStateFlow(emptyList<CargoEntity>())
-    val cargoFlow = _cargoFlow.asStateFlow()
+    private val state = MutableStateFlow(HomeScreenState())
+    val homeState = state.asStateFlow()
 
-    private val _selectedCargo = MutableStateFlow(CargoEntity())
-    val selectedCargo = _selectedCargo.asStateFlow()
 
-    init {
-        _cargoFlow.value = listOfCargos
+    fun onEvent(event: HomeEvents) {
+        when (event) {
+            is HomeEvents.OnItemClick -> {
+                setSelectedCargo(event.item)
+            }
+            is HomeEvents.OnAddItemClick -> {
+                event.item.id.let { id ->
+                    id?.let {
+                        changeItemToSelected(it)
+                    }
+                }
+            }
+            is HomeEvents.OnDismiss -> {
+                onDismiss()
+            }
+            is HomeEvents.OnRemoveItemClick -> {
+                changeItemToUnSelected()
+            }
+            is HomeEvents.OnShowSheet -> {
+                onShow()
+            }
+        }
     }
 
+    init {
+        state.value = state.value.copy(
+            showSheet = false,
+            cargoList = listOfCargos,
+            selectedCargo = null
+        )
+    }
+
+    fun onShow(){
+        viewModelScope.launch {
+            state.value = state.value.copy(
+                showSheet = true,
+                cargoList = state.value.cargoList,
+                selectedCargo = state.value.selectedCargo
+            )
+        }
+    }
+
+    fun onDismiss(){
+        viewModelScope.launch {
+            state.value = state.value.copy(
+                showSheet = false,
+                cargoList = state.value.cargoList,
+                selectedCargo = state.value.selectedCargo
+            )
+        }
+    }
 
     fun setSelectedCargo(cargo: CargoEntity){
         viewModelScope.launch {
-            _selectedCargo.value = cargo
+            state.value = state.value.copy(
+                showSheet = state.value.showSheet,
+                cargoList = state.value.cargoList,
+                selectedCargo = cargo
+            )
         }
     }
 
     fun changeItemToSelected(id: Int) {
         viewModelScope.launch {
-            _cargoFlow.value = _cargoFlow.value.map {
-                if (it.id == id) {
-                    it.copy(isSelected = true)
-                } else {
-                    it.copy(isSelected = false)
-                }
-            }
+
+            state.value = state.value.copy(
+                showSheet = state.value.showSheet,
+                cargoList = state.value.cargoList.map {
+                    if (it.id == id) {
+                        it.copy(isSelected = true)
+                    } else {
+                        it.copy(isSelected = false)
+                    }
+                },
+                selectedCargo = state.value.selectedCargo
+            )
+
         }
     }
 
     fun changeItemToUnSelected() {
         viewModelScope.launch {
-            _cargoFlow.value = _cargoFlow.value.map {
-                it.copy(isSelected = null)
-            }
+            state.value = state.value.copy(
+                showSheet = false,
+                cargoList = listOfCargos,
+                selectedCargo = null
+            )
         }
     }
 
