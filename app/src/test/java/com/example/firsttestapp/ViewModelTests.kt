@@ -2,12 +2,19 @@ package com.example.firsttestapp
 
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.firsttestapp.core.network.KtorService
+import com.example.firsttestapp.data.CargoRepositoryIMP
+import com.example.firsttestapp.data.repository.CargoRepository
 import com.example.firsttestapp.domain.model.CargoEntity
 import com.example.firsttestapp.domain.model.CityEntity
+import com.example.firsttestapp.domain.usecase.GetCargoListUseCase
 import com.example.firsttestapp.presentation.HomeScreen.intent.HomeEvents
 import com.example.firsttestapp.presentation.HomeScreen.viewmodel.HomeViewModel
+import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.engine.okhttp.OkHttp
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -15,8 +22,17 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.koin.compose.koinInject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
+import org.koin.core.component.inject
+import org.koin.core.context.GlobalContext.startKoin
+import org.koin.core.context.GlobalContext.stopKoin
+import org.koin.core.module.dsl.viewModelOf
+import org.koin.dsl.module
+import org.koin.java.KoinJavaComponent.inject
 
-class ViewModelTests {
+class ViewModelTests: KoinComponent {
 
     private lateinit var viewModel: HomeViewModel
     private val testDispatcher = StandardTestDispatcher()
@@ -34,14 +50,35 @@ class ViewModelTests {
         price = 5f
     )
 
+
+    @Before
+    fun setupKoin() {
+        stopKoin() // clean up previous instance
+
+        startKoin {
+            modules(
+                module {
+                    viewModelOf (::HomeViewModel)
+                    factory { GetCargoListUseCase(get<CargoRepository>()::getCargoList) }
+                    factory<CargoRepository> { CargoRepositoryIMP(get()) }
+                    single<HttpClientEngine> { OkHttp.create() }
+                    single { KtorService(get()) }
+                }
+            )
+        }
+    }
+
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = HomeViewModel()
+        val viewMo: HomeViewModel by inject()
+        viewModel = viewMo
+        testDispatcher.scheduler.advanceUntilIdle() // Let coroutines run
     }
 
     @After
     fun tearDown() {
+        stopKoin()
         Dispatchers.resetMain()
     }
 
@@ -51,7 +88,7 @@ class ViewModelTests {
 
         println("Start test...")
 
-        assert(viewModel.homeState.value.cargoList.size > 0)
+        assert(viewModel.homeState.value.cargoList.isNotEmpty())
 
     }
 

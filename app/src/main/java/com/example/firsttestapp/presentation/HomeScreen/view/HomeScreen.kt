@@ -70,7 +70,7 @@ class HomeScreen {
         val centerIndex = totalItems / 2
 
 
-        val listState = rememberLazyListState(initialFirstVisibleItemIndex = 0)
+        val listState = rememberLazyListState(initialFirstVisibleItemIndex = centerIndex)
         val scope = rememberCoroutineScope()
         // Auto-reset scroll to center when near edges
         LaunchedEffect(listState.firstVisibleItemIndex) {
@@ -82,6 +82,7 @@ class HomeScreen {
                 }
             }
         }
+
         val color = Theme.colors
 
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -166,34 +167,39 @@ class HomeScreen {
                 Spacer(Modifier.height(50.dp))
 
 
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .testTag("lazyList")
-                ) {
+                if(homeScreenState.cargoList.isEmpty()){
+                    Materials.Loading()
+                }else{
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag("lazyList")
+                    ) {
 
-                    items(totalItems) { index ->
-                        val item = homeScreenState.cargoList[index % homeScreenState.cargoList.size]
-                        Materials.Cargo.Item(
-                            modifier = Modifier.testTag("originTagIndex$index"),
-                            model = item,
-                            onItemClick = {
+                        items(totalItems) { index ->
+                            val item = homeScreenState.cargoList[index % homeScreenState.cargoList.size]
+                            Materials.Cargo.Item(
+                                modifier = Modifier.testTag("originTagIndex$index"),
+                                model = item,
+                                onItemClick = {
 
-                                viewModel.onEvent(HomeEvents.OnItemClick(item))
+                                    viewModel.onEvent(HomeEvents.OnItemClick(item))
 
-                                scope.launch {
-                                    viewModel.onEvent(HomeEvents.OnShowSheet)
+                                    scope.launch {
+                                        viewModel.onEvent(HomeEvents.OnShowSheet)
+                                    }
+
+                                },
+                                onUnSelectItemClick = {
+                                    viewModel.onEvent(HomeEvents.OnRemoveItemClick)
                                 }
+                            )
+                        }
 
-                            },
-                            onUnSelectItemClick = {
-                                viewModel.onEvent(HomeEvents.OnRemoveItemClick)
-                            }
-                        )
                     }
-
                 }
+
 
 
             }

@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
@@ -46,17 +47,21 @@ import com.example.firsttestapp.presentation.ui.share.SquareBox
 import com.example.firsttestapp.presentation.ui.share.VerticalLine
 
 
-//@Preview
-//@Composable
-//private fun shocargo() {
-//    Column(modifier = Modifier.fillMaxSize().background(Color.Gray)) {
-//        Materials.Cargo.Item()
-//    }
-//}
-
 
 object Materials {
 
+
+    @Composable
+    fun Loading() {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(
+                color = Theme.colors.primaryMain
+            )
+        }
+    }
 
 
 
